@@ -7,6 +7,7 @@ use crate::{
     syntax::{ast::App, Context},
 };
 
+use crate::instrument;
 /// Generates support code for `#[init]` functions
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let init = &app.init;
@@ -16,7 +17,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     let context = &init.context;
     let attrs = &init.attrs;
-    let stmts = &init.stmts;
+    let stmts_ = &init.stmts;
+    let mut binding = stmts_.clone();
+    let stmts = instrument::my_proc_macro(&mut binding);
+   //println!("the stmts {:?}", stmts);
+   //println!("the stmts {:?}", stmts.to_token_stream().to_string());
+
     let shared = &init.user_shared_struct;
     let shared_vis = &app.shared_resources_vis;
     let local = &init.user_local_struct;

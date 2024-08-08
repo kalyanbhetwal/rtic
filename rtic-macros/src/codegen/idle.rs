@@ -4,7 +4,7 @@ use crate::{
     codegen::{local_resources_struct, module, shared_resources_struct},
 };
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, ToTokens};
 
 /// Generates support code for `#[idle]` functions
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
@@ -31,9 +31,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
         root_idle.push(module::codegen(Context::Idle, app, analysis));
 
-        let attrs = &idle.attrs;
+        let attrs = &idle.attrs; 
         let context = &idle.context;
         let stmts = &idle.stmts;
+        // for s in stmts{
+        //     println!("these are the stmts {:?}", s.to_token_stream().to_string());
+        // }
         let user_idle = if !idle.is_extern {
             Some(quote!(
                 #(#attrs)*
