@@ -6,6 +6,7 @@ use crate::{
         util,
     },
 };
+use cortex_m_semihosting::{debug, hprintln};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -55,6 +56,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
             stmts.push(quote!(
                 let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
+                //hprintln!("the exec is {:#?}", #name);
                 exec.poll(|| {
                     let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
                     exec.set_pending();

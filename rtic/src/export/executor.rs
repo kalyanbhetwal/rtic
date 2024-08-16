@@ -6,7 +6,8 @@ use core::{
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
-
+use cortex_m_semihosting::{debug, hprintln};
+    
 static WAKER_VTABLE: RawWakerVTable =
     RawWakerVTable::new(waker_clone, waker_wake, waker_wake, waker_drop);
 
@@ -44,6 +45,7 @@ impl AsyncTaskExecutorPtr {
     #[inline(always)]
     pub fn set_in_main<F: Future>(&self, executor: &ManuallyDrop<AsyncTaskExecutor<F>>) {
         self.ptr.store(executor as *const _ as _, Ordering::Relaxed);
+        hprintln!("the ptr is {:?}", self.ptr);
     }
 
     #[inline(always)]
@@ -170,6 +172,7 @@ impl<F: Future> AsyncTaskExecutor<F> {
     // Used by wakers to indicate that the executor needs to run.
     #[inline(always)]
     pub fn set_pending(&self) {
+        hprintln!("i am being pended {:p}", &self.pending);
         self.pending.store(true, Ordering::Release);
     }
 
@@ -188,6 +191,7 @@ impl<F: Future> AsyncTaskExecutor<F> {
         // This unsafe is protected by `running` being false and the atomic setting it to true.
         unsafe {
             self.task.get().write(MaybeUninit::new(future));
+            hprintln!("I am being spawned {:#?}", self.task.get());
         }
         self.set_pending();
     }

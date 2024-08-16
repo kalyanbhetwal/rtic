@@ -23,6 +23,8 @@ macro_rules! with_backend {
 
 with_backend! { mod: [analyze, check, codegen, preprocess, syntax, instrument] }
 with_backend! { use std::{fs, env, path::Path}; }
+with_backend! { use cortex_m_semihosting::{debug, hprintln};}
+
 with_backend! { use proc_macro::TokenStream; }
 
 with_backend! {

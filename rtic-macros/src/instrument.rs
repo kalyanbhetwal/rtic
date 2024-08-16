@@ -297,7 +297,7 @@ impl VisitMut for WARVisitor {
             }
             Stmt::Local(_)=>{
                 if self.in_region {
-                    //println!("I am here and there {}", stmt.to_token_stream());
+                    println!("I am here and there {}", stmt.to_token_stream());
                 }
                 self.stmts.push(stmt.clone()); 
             }
@@ -467,7 +467,10 @@ pub fn my_proc_macro(stmts: &mut Vec<Stmt>) -> Vec<Stmt> {
     for mut s in &mut *stmts{
         visitor.visit_stmt_mut(&mut s);
     }
-    stmts_
+    // for s in visitor.stmts{
+    //         println!("the is stmts {:?}", s.to_token_stream().to_string());
+    // }
+    visitor.stmts
     // Parse the input tokens into a syntax tree
 //     let mut input = parse_macro_input!(item as ItemFn);
 
