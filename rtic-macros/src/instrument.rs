@@ -22,7 +22,7 @@ struct WARVisitor{
     branch_count: usize, // Count the number of branches
     in_region: bool,  // in atomic region or not
     tainted_vars: HashSet<String>, //collect tainted variables through taint propagation
-    branch_reads: HashSet<String>,
+    branch_reads: HashSet<String>, // reads in branch conditions
     stmts :Vec<Stmt>
 }
 
@@ -327,11 +327,11 @@ impl VisitMut for WARVisitor {
                                                 syn::Expr::Verbatim(proc_macro2::TokenStream::new())
                                             });
                                             let ins_stmt: syn::Stmt = parse_quote! {
-                                                unsafe { save_variables(&(#expr) as *const _, core::mem::size_of_val(&(#expr))); }
+                                               save_variables(&(#expr) as *const _, core::mem::size_of_val(&(#expr)));
                                             };
                                             println!("the stmt {:?}", ins_stmt.to_token_stream().to_string());
-                                            // Insert the instrumentation after the current statement
-                                            closure_body.block.stmts.insert(i + 1, ins_stmt);
+                                            // Insert the instrumentation at the current statement
+                                            closure_body.block.stmts.insert(i , ins_stmt);
                                             
                                             // Increment index to account for the newly inserted statement
                                             i += 1;
