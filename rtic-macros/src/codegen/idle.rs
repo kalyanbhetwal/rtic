@@ -6,6 +6,7 @@ use crate::{
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 
+use crate::instrument;
 /// Generates support code for `#[idle]` functions
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     if let Some(idle) = &app.idle {
@@ -33,7 +34,10 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
         let attrs = &idle.attrs; 
         let context = &idle.context;
-        let stmts = &idle.stmts;
+        //let stmts = &idle.stmts;
+        let stmts_ = &idle.stmts;
+        let mut binding = stmts_.clone();
+        let stmts = instrument::my_proc_macro(&mut binding);
         // for s in stmts{
         //     println!("these are the stmts {:?}", s.to_token_stream().to_string());
         // }

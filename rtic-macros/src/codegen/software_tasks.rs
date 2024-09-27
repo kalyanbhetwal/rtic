@@ -5,6 +5,7 @@ use crate::{
 };
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use crate::instrument;
 
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
@@ -35,7 +36,10 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let context = &task.context;
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
-            let stmts = &task.stmts;
+            //let stmts = &task.stmts;
+            let stmts_ = &task.stmts;
+            let mut binding = stmts_.clone();
+            let stmts = instrument::my_proc_macro(&mut binding);
             let inputs = &task.inputs;
 
             user_tasks.push(quote!(

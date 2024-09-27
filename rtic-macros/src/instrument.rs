@@ -9,7 +9,7 @@ use syn::ExprReference;
 #[allow(unused_imports)]
 use syn::{
     parse_macro_input, parse_quote,
-    Expr, ExprAssign, ExprBinary, ExprField, ExprIndex, ExprPath, ExprUnary, ItemFn, Result, Stmt, Ident,BinOp,
+    Expr, ExprAssign, ExprBinary, ExprField, ExprIndex, ExprPath, ExprUnary, ItemFn, Result, Stmt, Ident,BinOp, ExprClosure,
     ExprIf, Block, ExprUnsafe, UnOp
 };
 
@@ -288,12 +288,34 @@ impl VisitMut for WARVisitor {
                         } else if ident == "end_atomic" {
                             self.in_region = false;
                             //println!("in end");
-                        }else{
+                        }
+                        else{
                             println!("I am here and there ");
                         }
                     }
                 }
                 self.stmts.push(stmt.clone());
+            }
+            Stmt::Expr(Expr::MethodCall(method_call),_) =>{
+                if method_call.method == "lock" {
+                    println!("I found lock");
+                    if let Some(arg) = method_call.args.first_mut() {
+                        if let Expr::Closure(ExprClosure { body, .. }) = arg {
+                            
+                            if let Expr::Block(closure_body) = &mut **body {
+                                let new_stmt: syn::Stmt = parse_quote! {
+                                    let x = 42;
+                                };
+                                    println!("test {:?}", closure_body.to_token_stream().to_string());
+                                   closure_body.block.stmts.insert(0, new_stmt);
+                            }
+                           
+                        }
+
+                    }
+
+                }
+                self.stmts.push(stmt.clone()); 
             }
             Stmt::Local(_)=>{
                 if self.in_region {
