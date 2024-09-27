@@ -303,11 +303,18 @@ impl VisitMut for WARVisitor {
                         if let Expr::Closure(ExprClosure { body, .. }) = arg {
                             
                             if let Expr::Block(closure_body) = &mut **body {
+                                for stmt in closure_body.block.stmts.clone(){
+                                    println!("stmts {}", stmt.to_token_stream().to_string());
+                                }
                                 let new_stmt: syn::Stmt = parse_quote! {
                                     let x = 42;
                                 };
+                                let ins_stmt: syn::Stmt = parse_quote! {
+                                    save_variables(a as *const _, core::mem::size_of_val(a));
+                                };
+                               
                                     println!("test {:?}", closure_body.to_token_stream().to_string());
-                                   closure_body.block.stmts.insert(0, new_stmt);
+                                   closure_body.block.stmts.insert(0, ins_stmt);
                             }
                            
                         }
