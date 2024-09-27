@@ -296,34 +296,60 @@ impl VisitMut for WARVisitor {
                 }
                 self.stmts.push(stmt.clone());
             }
-            Stmt::Expr(Expr::MethodCall(method_call),_) =>{
+            Stmt::Expr(Expr::MethodCall(method_call), _) => {
                 if method_call.method == "lock" {
                     println!("I found lock");
+                    
+                    // Get mutable reference to the closure argument
                     if let Some(arg) = method_call.args.first_mut() {
                         if let Expr::Closure(ExprClosure { body, .. }) = arg {
                             
+                            // Make the body mutable to modify statements
                             if let Expr::Block(closure_body) = &mut **body {
-                                for stmt in closure_body.block.stmts.clone(){
-                                    println!("stmts {}", stmt.to_token_stream().to_string());
+                                
+                                // Iterate over the statements with an index so we can insert after
+                                let mut i = 0;
+                                while i < closure_body.block.stmts.len() {
+                                    let stmt = &closure_body.block.stmts[i];
+                                    println!("stmts --x-- {}", stmt.to_token_stream().to_string());
+            
+                                    if let Stmt::Expr(expr, _) = stmt {
+                                        // Extract reads and writes from the expression
+                                        println!("writes and reads before extract");
+                                        let (reads_, writes_) = self.extract_vars_from_expr(expr);
+                                        
+                                        println!("reads_ {:?}", reads_);
+                                        println!("wrties_ {:?}", writes_);
+                                        // Iterate over all the written variables and insert instrumentation
+                                        for w in &writes_ {
+                                            let expr: syn::Expr = syn::parse_str(w).unwrap_or_else(|_| {
+                                                // Fallback if it's not a simple identifier
+                                                syn::Expr::Verbatim(proc_macro2::TokenStream::new())
+                                            });
+                                            let ins_stmt: syn::Stmt = parse_quote! {
+                                                unsafe { save_variables(&(#expr) as *const _, core::mem::size_of_val(&(#expr))); }
+                                            };
+                                            println!("the stmt {:?}", ins_stmt.to_token_stream().to_string());
+                                            // Insert the instrumentation after the current statement
+                                            closure_body.block.stmts.insert(i + 1, ins_stmt);
+                                            
+                                            // Increment index to account for the newly inserted statement
+                                            i += 1;
+                                        }
+                                    }
+            
+                                    // Move to the next statement
+                                    i += 1;
                                 }
-                                let new_stmt: syn::Stmt = parse_quote! {
-                                    let x = 42;
-                                };
-                                let ins_stmt: syn::Stmt = parse_quote! {
-                                    save_variables(a as *const _, core::mem::size_of_val(a));
-                                };
-                               
-                                    println!("test {:?}", closure_body.to_token_stream().to_string());
-                                   closure_body.block.stmts.insert(0, ins_stmt);
                             }
-                           
                         }
-
                     }
-
                 }
+                
+                // Store the statement
                 self.stmts.push(stmt.clone()); 
             }
+            
             Stmt::Local(_)=>{
                 if self.in_region {
                     println!("I am here and there {}", stmt.to_token_stream());
@@ -469,7 +495,7 @@ impl VisitMut for WARVisitor {
                             let ident = Ident::new(&w, proc_macro2::Span::call_site());
                             self.stmts.push(  parse_quote! {
                                 unsafe {save_variables(&#ident as *const _, core::mem::size_of_val(&#ident)); }
-                            });
+                                });
                             }
                         }
                     }
