@@ -16,12 +16,12 @@ use syn::{
 use syn::visit_mut::VisitMut;
 
 struct WARVisitor{
-    reads: HashSet<String>,
-    writes: HashSet<String>,
-    conditional_writes: HashMap<String, usize>,
+    reads: HashSet<String>, //extract all reads
+    writes: HashSet<String>, // extract all writes
+    conditional_writes: HashMap<String, usize>, //writes in conditional branches
     branch_count: usize, // Count the number of branches
-    in_region: bool,
-    tainted_vars: HashSet<String>,
+    in_region: bool,  // in atomic region or not
+    tainted_vars: HashSet<String>, //collect tainted variables through taint propagation
     branch_reads: HashSet<String>,
     stmts :Vec<Stmt>
 }
